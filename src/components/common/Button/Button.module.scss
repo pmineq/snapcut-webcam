@@ -1,0 +1,44 @@
+.btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.06s ease, opacity 0.15s ease;
+  user-select: none;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.md {
+  height: 40px;
+  font-size: 14px;
+}
+
+.sm {
+  height: 30px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.primary {
+  background: #111;
+  color: #fff;
+}
+
+.ghost {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+}
+
+.danger {
+  background: rgba(255, 0, 0, 0.12);
+  color: #b00020;
+}
