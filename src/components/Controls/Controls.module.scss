@@ -1,32 +1,95 @@
 .wrap {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.title {
+  font-size: 13px;
+  color: #aaa;
 }
 
 .row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.filterChip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #222;
+  border: 0;
+  color: #aaa;
+  white-space: nowrap;
+
+  &.active {
+    background: #fff;
+    color: #000;
+  }
 }
 
 .grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .frameBtn {
-  display: flex;
-  justify-content: center;
-  padding: 2px 3px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #fff;
-  text-align: center;
+  border-radius: 12px;
+  padding: 6px;
+  background: #111;
+  border: 1px solid #333;
+
+  &.active {
+    outline: 2px solid #fff;
+  }
 }
 
 .thumb {
-  width: 25px;
-  height: 20px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.label {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  text-align: center;
+  color: #aaa;
+}
+
+
+@media (max-width: 768px) {
+  .wrap {
+    gap: 10px;
+    padding-bottom: 80px;
+  }
+
+  .title {
+    margin: 0;
+    font-size: 10px;
+    color: #bbb;
+  }
+
+  .row {
+    gap: 6px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+
+  .label {
+    font-size: 10px;
+  }
 }

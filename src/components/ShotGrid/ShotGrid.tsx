@@ -9,6 +9,7 @@ const cx = classNames.bind(styles);
 type Props = {
   shots: Shot[];
   onRemove: (id: string) => void;
+  onSelect: (shot: Shot) => void;
 };
 
 const ShotGrid = ({ shots, onRemove }: Props) => {
@@ -31,7 +32,7 @@ const ShotGrid = ({ shots, onRemove }: Props) => {
       ) : (
         <ul className={cx('grid')}>
           {shots.map(shot => (
-            <li key={shot.id} className={cx('item')}>
+            <li key={shot.id} className={cx('item')} onClick={() => onSelect(shot)}>
               <img className={cx('img')} src={shot.dataUrl} alt="shot" />
 
               <div className={cx('meta')}>
@@ -40,21 +41,29 @@ const ShotGrid = ({ shots, onRemove }: Props) => {
                 </span>
 
                 <div className={cx('actions')}>
-                  <Button
+                   <Button
+                   size="sm"
+                   variant="ghost"
+                   onClick={() =>
+                    downloadDataUrlAsFile(
+                      shot.dataUrl,
+                      `snpcut-${shot.createdAt}.png`
+                    )
+                  }
+                  >
+                    다운 ⬇
+                    </Button>
+                    
+                    <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleDownload(shot)}
-                  >
-                    다운
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onRemove(shot.id)}
-                  >
-                    삭제
-                  </Button>
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove(shot.id);
+                      }}
+                    >
+                      삭제 🗑
+                    </Button>
                 </div>
               </div>
             </li>

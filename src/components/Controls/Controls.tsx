@@ -30,14 +30,14 @@ export default function Controls({
         <h3 className={cx("title")}>필터</h3>
         <div className={cx("row")}>
           {(Object.keys(FILTERS) as FilterKey[]).map((k) => (
-            <Button
+            <button
               key={k}
-              size="sm"
-              variant={k === filter ? "primary" : "ghost"}
+              type="button"
+              className={cx("filterChip", k === filter && "active")}
               onClick={() => onChangeFilter(k)}
-            >
-              {FILTERS[k].label}
-            </Button>
+              >
+                {FILTERS[k].label}
+              </button>
           ))}
         </div>
       </section>

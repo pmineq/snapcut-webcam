@@ -44,7 +44,7 @@ export default function Home() {
     {
       cols: 3,
       cellWidth: 540,
-      cellHeight: 432,
+      cellHeight: 540,
       gap: 16,
       background: '#111',
     }
@@ -74,16 +74,44 @@ const handleSnap = useCallback((pngDataUrl: string) => {
 
   const latestShot = useMemo(() => shots[0], [shots]);
 
+  const recentShots = useMemo(() => shots.slice(0, 3), [shots]);
+
   const handleDownloadLatest = useCallback(() => {
     if (!latestShot) return;
     downloadDataUrlAsFile(latestShot.dataUrl, `snpcut-${latestShot.createdAt}.png`);
   }, [latestShot]);
+
+  const [activeShot, setActiveShot] = useState<Shot | null>(null);
+
+  const [showCameraGate, setShowCameraGate] = useState(true);
+
+  const handleStartCamera = () => {
+    setShowCameraGate(false);
+    window.dispatchEvent(new CustomEvent("SNPCUT_START_CAMERA"));
+  };
+
+  const openShot = (shot: Shot) => {
+  setTimeout(() => setActiveShot(shot), 0);
+};
+
+const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
 
   return (
     <div className={cx("page")}>
       <header className={cx("header")}>
         <h1 className={cx("title")}>SNPCUT</h1>
         <p className={cx("desc")}>SNAP → ShotGrid 누적 → PNG 다운로드</p>
+        <button
+          type="button"
+          className={cx("restartBtn")}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("SNPCUT_RESTART_CAMERA"));
+          }}
+          aria-label="카메라 재시작"
+        >
+          ⟳
+        </button>
       </header>
 
       <main className={cx("content")}>
@@ -95,39 +123,185 @@ const handleSnap = useCallback((pngDataUrl: string) => {
             disabled={shots.length >= MAX_SHOTS}
           />
 
-          <Controls
-            filter={filter}
-            onChangeFilter={setFilter}
-            frame={frame}
-            onChangeFrame={setFrame}
-            frames={frames}
-          />
-
-          <div className={cx("actions")}>
-            <Button size="md" variant="primary" onClick={handleDownloadLatest} disabled={!latestShot}>
-              최신 PNG 다운로드
-            </Button>
-            <Button size="md" variant="danger" onClick={handleClear} disabled={shots.length === 0}>
-              전체 삭제
-            </Button>
+          <div className={cx("pc-control")}>
+            <Controls
+              filter={filter}
+              onChangeFilter={setFilter}
+              frame={frame}
+              onChangeFrame={setFrame}
+              frames={frames}
+            />
           </div>
 
-          <Button
-            size="md"
-            variant="primary"
-            onClick={handleDownloadGrid}
-            disabled={shots.length === 0}
-          >
-            Grid 다운로드
-          </Button>
+          <div className={cx('pc-actions')}>
+            <div className={cx("actions")}>
+              <Button size="md" variant="primary" onClick={handleDownloadLatest} disabled={!latestShot}>
+                최신 PNG 다운로드
+              </Button>
+              <Button size="md" variant="danger" onClick={handleClear} disabled={shots.length === 0}>
+                전체 삭제
+              </Button>
+            </div>
+
+            <Button
+              size="md"
+              variant="primary"
+              onClick={handleDownloadGrid}
+              disabled={shots.length === 0}
+            >
+              Grid 다운로드
+            </Button> 
+          </div>
 
 
         </section>
 
-        <section className={cx("right")}>
-          <ShotGrid shots={shots} onRemove={handleRemove} />
+        <section className={cx("right", 'pc-grid')}>
+          <ShotGrid shots={shots} onRemove={handleRemove} onSelect={openShot} />
         </section>
+
+        <div className={cx("mobileDock")}>
+          <div className={cx("dockInner")}>
+            <Controls
+              filter={filter}
+              onChangeFilter={setFilter}
+              frame={frame}
+              onChangeFrame={setFrame}
+              frames={frames}
+            />
+          </div>
+
+        {/* 모바일 전용 SNAP 버튼 */}
+        <button
+          type="button"
+          className={cx("mobileSnap")}
+          onClick={() => {
+            // WebcamView 내부 handleSnap 트리거용 커스텀 이벤트
+            window.dispatchEvent(new CustomEvent("SNPCUT_SNAP"));
+          }}
+          disabled={shots.length >= 9}
+        >
+          <span className={'blind'}>촬영</span>
+        </button>
+
+        
+        {/* 좌하단 최근사진 스택 */}
+        <button
+          type="button"
+          className={cx("recentStackBtn", shots.length === 0 && "disabled")}
+          onClick={() => shots.length > 0 && setIsGalleryOpen(true)}
+          aria-label="최근 사진 열기"
+        >
+          <div className={cx("recentStack")}>
+            {recentShots.map((s, idx) => (
+              <img
+                key={s.id}
+                className={cx("recentThumb", `layer${idx}`)}
+                src={s.dataUrl}
+                alt="recent shot"
+              />
+            ))}
+
+            {shots.length > 0 && (
+              <div className={cx("recentBadge")}>{shots.length}</div>
+            )}
+          </div>
+        </button>
+
+        </div>
+
+
       </main>
+
+  {/* 갤러리 모달 */}
+  {isGalleryOpen && (
+    <div className={cx("modal")} role="dialog" aria-modal="true" onClick={() => setIsGalleryOpen(false)}>
+      <div className={cx("modalInner")} onClick={(e) => e.stopPropagation()}>
+        <div className={cx("modalHead")}>
+          <h3 className={cx("modalTitle")}>최근 사진</h3>
+          <button type="button" className={cx("modalClose")} onClick={() => setIsGalleryOpen(false)}>
+            닫기
+          </button>
+        </div>
+        
+        <div className={cx("modalHead")}>
+          <Button
+              size="md"
+              variant="primary"
+              onClick={handleDownloadGrid}
+              disabled={shots.length === 0}
+            >
+              Grid 다운로드
+            </Button>
+
+            <Button size="md" variant="danger" onClick={handleClear} disabled={shots.length === 0}>
+                전체 삭제
+            </Button>
+        </div>
+
+        {shots.length === 0 ? (
+          <div className={cx("modalEmpty")}>아직 샷이 없어요. SNAP 해보세요!</div>
+        ) : (
+          <ul className={cx("modalList")}>
+            {shots.map((shot) => (
+              <li key={shot.id} className={cx("modalItem")}>
+                <img className={cx("modalImg")} src={shot.dataUrl} alt="shot" />
+
+                <div className={cx("modalMeta")}>
+                  <span className={cx("modalTime")}>
+                    {new Date(shot.createdAt).toLocaleTimeString()}
+                  </span>
+
+                  <div className={cx("modalActions")}>
+                    <button
+                      type="button"
+                      className={cx("modalBtn")}
+                      onClick={() =>
+                        downloadDataUrlAsFile(shot.dataUrl, `snpcut-${shot.createdAt}.png`)
+                      }
+                    >
+                      다운로드
+                    </button>
+                    <button
+                      type="button"
+                      className={cx("modalBtn", "danger")}
+                      onClick={() => handleRemove(shot.id)}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )}
+
+
+      {/* 카메라 허용 팝업 */}
+      {showCameraGate && (
+        <div className={cx("gate")} role="dialog" aria-modal="true">
+          <div className={cx("gateCard")}>
+            <h2 className={cx("gateTitle")}>카메라 사용 허용이 필요해요</h2>
+            <p className={cx("gateDesc")}>
+              ‘허용’을 누르면 바로 촬영을 시작할 수 있어요.
+            </p>
+
+            <div className={cx("gateActions")}>
+              <button
+                type="button"
+                className={cx("gateBtnPrimary")}
+                onClick={handleStartCamera}
+              >
+                카메라 시작
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

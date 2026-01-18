@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import classNames from "classnames/bind";
 import styles from "./WebcamView.module.scss";
 
@@ -38,19 +38,56 @@ export default function WebcamView({ onSnap, filter, frame, disabled }: Props) {
       frameImg = await loadImage(frameOverlaySrc);
     }
 
-    const png = captureToPngDataUrl(video, {
-      width: 540,
-      height: 432,
-      filter,
-      frameImage: frameImg,
-    });
+  const rect = boxRef.current?.getBoundingClientRect();
+  const size = rect ? Math.round(rect.width) : 720; // fallback
+
+  const png = captureToPngDataUrl(video, {
+    width: size,
+    height: size,
+    filter,
+    frameImage: frameImg,
+  });
 
     onSnap(png);
   }, [onSnap, filter, frameOverlaySrc]);
 
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+  const onSnap = () => {
+    if (status !== "ready" || disabled) return;
+    handleSnap();
+  };
+
+  window.addEventListener("SNPCUT_SNAP", onSnap);
+  return () => window.removeEventListener("SNPCUT_SNAP", onSnap);
+}, [handleSnap, status, disabled]);
+
+useEffect(() => {
+  const onStart = () => start();
+  window.addEventListener("SNPCUT_START_CAMERA", onStart);
+  return () => window.removeEventListener("SNPCUT_START_CAMERA", onStart);
+}, [start]);
+
+useEffect(() => {
+  const onRestart = async () => {
+    if (status === "ready") {
+      stop();
+    }
+    
+    setTimeout(() => {
+      start();
+    }, 150);
+  };
+
+  window.addEventListener("SNPCUT_RESTART_CAMERA", onRestart);
+  return () => window.removeEventListener("SNPCUT_RESTART_CAMERA", onRestart);
+}, [start, stop, status]);
+
+
   return (
     <div className={cx("wrap")}>
-      <div className={cx("videoBox")}>
+      <div ref={boxRef} className={cx("videoBox")}>
         
         <video ref={videoRef} className={cx("video", filter)} playsInline muted />
 
@@ -72,9 +109,15 @@ export default function WebcamView({ onSnap, filter, frame, disabled }: Props) {
         <Button size="md" variant="ghost" onClick={stop} disabled={status !== "ready"}>
           Stop
         </Button>
-        <Button size="md" variant="primary" onClick={handleSnap} disabled={status !== 'ready' || disabled}>
+        <Button
+          size="md"
+          variant="primary"
+          onClick={handleSnap}
+          disabled={status !== "ready" || disabled}
+          className={cx("snapBtn")}>
           SNAP
-        </Button>
+          </Button>
+
       </div>
     </div>
   );
