@@ -52,6 +52,7 @@
 .left {
   display: grid;
   gap: 12px;
+  max-width: 500px;
 }
 
 .right {
@@ -252,6 +253,11 @@
   display: none;
 }
 
+.pc-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
 
 /* 모바일 */
 @media (max-width: 768px) {
@@ -281,6 +287,7 @@
     width: 100%;
     flex: 1;
     align-content: center;
+    margin: 0 auto;
   }
 
   .title {
