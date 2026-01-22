@@ -1,4 +1,5 @@
-import { FILTERS, type FilterKey } from "@/utils/filters";
+import type { FilterKey } from "@/utils/filters";
+import { applyFilterToImageData } from "@/utils/imageFilters";
 
 export type CaptureOptions = {
   width: number;
@@ -20,7 +21,7 @@ export function captureToPngDataUrl(video: HTMLVideoElement, options: CaptureOpt
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Canvas context not available");
 
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -31,8 +32,6 @@ export function captureToPngDataUrl(video: HTMLVideoElement, options: CaptureOpt
   const sx = (vw - sw) / 2;
   const sy = (vh - sh) / 2;
 
-  ctx.filter = FILTERS[filter]?.value ?? "none";
-
   // 디폴트 좌우반전
   ctx.save();
   ctx.translate(width, 0);
@@ -41,7 +40,13 @@ export function captureToPngDataUrl(video: HTMLVideoElement, options: CaptureOpt
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, width, height);
 
   ctx.restore();
-  ctx.filter = "none";
+
+  // iOS Safari 호환을 위해 ImageData를 직접 조작하여 필터 적용
+  if (filter !== "none") {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const filteredData = applyFilterToImageData(imageData, filter);
+    ctx.putImageData(filteredData, 0, 0);
+  }
 
   if (frameImage) {
     ctx.drawImage(frameImage, 0, 0, width, height);

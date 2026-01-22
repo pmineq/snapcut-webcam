@@ -9,16 +9,10 @@ const cx = classNames.bind(styles);
 type Props = {
   shots: Shot[];
   onRemove: (id: string) => void;
-  onSelect: (shot: Shot) => void;
+  onSelect?: (shot: Shot) => void;
 };
 
-const ShotGrid = ({ shots, onRemove }: Props) => {
-  const handleDownload = (shot: Shot) => {
-    downloadDataUrlAsFile(
-      shot.dataUrl,
-      `snpcut-${shot.createdAt}.png`
-    );
-  };
+const ShotGrid = ({ shots, onRemove, onSelect }: Props) => {
 
   return (
     <div className={cx('wrap')}>
@@ -32,7 +26,7 @@ const ShotGrid = ({ shots, onRemove }: Props) => {
       ) : (
         <ul className={cx('grid')}>
           {shots.map(shot => (
-            <li key={shot.id} className={cx('item')} onClick={() => onSelect(shot)}>
+            <li key={shot.id} className={cx('item')} onClick={() => onSelect?.(shot)}>
               <img className={cx('img')} src={shot.dataUrl} alt="shot" />
 
               <div className={cx('meta')}>

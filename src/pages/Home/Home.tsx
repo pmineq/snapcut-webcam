@@ -10,10 +10,13 @@ import { downloadDataUrlAsFile } from "@/utils/download";
 import { FRAMES, type FrameKey } from "@/utils/frames";
 import { type FilterKey } from "@/utils/filters";
 import { makeGridImageDataUrl } from '@/utils/makeGridImage';
+import { SNPCUT_EVENTS } from "@/types/events";
 
 import { Button } from "../../components/common";
 
 const cx = classNames.bind(styles);
+
+const MAX_SHOTS = 9;
 
 export type Shot = {
   id: string;
@@ -31,40 +34,43 @@ export default function Home() {
       Object.entries(FRAMES).map(([key, v]) => ({
         key: key as FrameKey,
         label: v.label,
-        thumbSrc: v.thumbSrc ?? "",
+        thumbSrc: v.thumbSrc,
       })),
     []
   );
 
   const handleDownloadGrid = useCallback(async () => {
-  if (shots.length === 0) return;
+    if (shots.length === 0) return;
 
-  const png = await makeGridImageDataUrl(
-    shots.map(s => s.dataUrl),
-    {
-      cols: 3,
-      cellWidth: 540,
-      cellHeight: 540,
-      gap: 16,
-      background: '#111',
+    try {
+      const png = await makeGridImageDataUrl(
+        shots.map(s => s.dataUrl),
+        {
+          cols: 3,
+          cellWidth: 540,
+          cellHeight: 540,
+          gap: 16,
+          background: '#111',
+        }
+      );
+
+      downloadDataUrlAsFile(png, `snpcut-grid-${Date.now()}.png`);
+    } catch (error) {
+      console.error("Failed to create grid image:", error);
+      alert("그리드 이미지 생성에 실패했습니다. 다시 시도해주세요.");
     }
-  );
+  }, [shots]);
 
-  downloadDataUrlAsFile(png, `snpcut-grid-${Date.now()}.png`);
-}, [shots]);
+  const handleSnap = useCallback((pngDataUrl: string) => {
+    setShots(prev => {
+      if (prev.length >= MAX_SHOTS) return prev;
 
-const MAX_SHOTS = 9;
-
-const handleSnap = useCallback((pngDataUrl: string) => {
-  setShots(prev => {
-    if (prev.length >= MAX_SHOTS) return prev;
-
-    return [
-      { id: crypto.randomUUID(), dataUrl: pngDataUrl, createdAt: Date.now() },
-      ...prev,
-    ];
-  });
-}, []);
+      return [
+        { id: crypto.randomUUID(), dataUrl: pngDataUrl, createdAt: Date.now() },
+        ...prev,
+      ];
+    });
+  }, []);
 
   const handleRemove = useCallback((id: string) => {
     setShots((prev) => prev.filter((s) => s.id !== id));
@@ -81,20 +87,14 @@ const handleSnap = useCallback((pngDataUrl: string) => {
     downloadDataUrlAsFile(latestShot.dataUrl, `snpcut-${latestShot.createdAt}.png`);
   }, [latestShot]);
 
-  const [activeShot, setActiveShot] = useState<Shot | null>(null);
-
   const [showCameraGate, setShowCameraGate] = useState(true);
 
-  const handleStartCamera = () => {
+  const handleStartCamera = useCallback(() => {
     setShowCameraGate(false);
-    window.dispatchEvent(new CustomEvent("SNPCUT_START_CAMERA"));
-  };
+    window.dispatchEvent(new CustomEvent(SNPCUT_EVENTS.START_CAMERA));
+  }, []);
 
-  const openShot = (shot: Shot) => {
-  setTimeout(() => setActiveShot(shot), 0);
-};
-
-const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
 
   return (
@@ -106,7 +106,7 @@ const [isGalleryOpen, setIsGalleryOpen] = useState(false);
           type="button"
           className={cx("restartBtn")}
           onClick={() => {
-            window.dispatchEvent(new CustomEvent("SNPCUT_RESTART_CAMERA"));
+            window.dispatchEvent(new CustomEvent(SNPCUT_EVENTS.RESTART_CAMERA));
           }}
           aria-label="카메라 재시작"
         >
@@ -157,7 +157,7 @@ const [isGalleryOpen, setIsGalleryOpen] = useState(false);
         </section>
 
         <section className={cx("right", 'pc-grid')}>
-          <ShotGrid shots={shots} onRemove={handleRemove} onSelect={openShot} />
+          <ShotGrid shots={shots} onRemove={handleRemove} />
         </section>
 
         <div className={cx("mobileDock")}>
@@ -176,12 +176,12 @@ const [isGalleryOpen, setIsGalleryOpen] = useState(false);
           type="button"
           className={cx("mobileSnap")}
           onClick={() => {
-            // WebcamView 내부 handleSnap 트리거용 커스텀 이벤트
-            window.dispatchEvent(new CustomEvent("SNPCUT_SNAP"));
+            window.dispatchEvent(new CustomEvent(SNPCUT_EVENTS.SNAP));
           }}
-          disabled={shots.length >= 9}
+          disabled={shots.length >= MAX_SHOTS}
+          aria-label="촬영"
         >
-          <span className={'blind'}>촬영</span>
+          <span className="blind">촬영</span>
         </button>
 
         

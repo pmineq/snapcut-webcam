@@ -4,10 +4,12 @@ import styles from "./WebcamView.module.scss";
 
 import { useWebcam } from "@/hooks/useWebcam";
 import { captureToPngDataUrl } from "@/utils/canvas";
+import { loadImage } from "@/utils/loadImage";
 import Button from "@/components/common/Button/Button";
 
 import { FRAMES, type FrameKey } from "@/utils/frames";
 import type { FilterKey } from "@/utils/filters";
+import { SNPCUT_EVENTS } from "@/types/events";
 
 const cx = classNames.bind(styles);
 
@@ -29,60 +31,65 @@ export default function WebcamView({ onSnap, filter, frame, disabled }: Props) {
 
 
   const handleSnap = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video) return;
+    try {
+      const video = videoRef.current;
+      if (!video) return;
 
-    // 프레임 이미지 로드 (선택된 경우)
-    let frameImg: HTMLImageElement | null = null;
-    if (frameOverlaySrc) {
-      frameImg = await loadImage(frameOverlaySrc);
+      // 프레임 이미지 로드 (선택된 경우)
+      let frameImg: HTMLImageElement | null = null;
+      if (frameOverlaySrc) {
+        frameImg = await loadImage(frameOverlaySrc);
+      }
+
+      const rect = boxRef.current?.getBoundingClientRect();
+      const size = rect ? Math.round(rect.width) : 720;
+
+      const png = captureToPngDataUrl(video, {
+        width: size,
+        height: size,
+        filter,
+        frameImage: frameImg,
+      });
+
+      onSnap(png);
+    } catch (error) {
+      console.error("Failed to capture image:", error);
+      alert("사진 촬영에 실패했습니다. 다시 시도해주세요.");
     }
-
-  const rect = boxRef.current?.getBoundingClientRect();
-  const size = rect ? Math.round(rect.width) : 720; // fallback
-
-  const png = captureToPngDataUrl(video, {
-    width: size,
-    height: size,
-    filter,
-    frameImage: frameImg,
-  });
-
-    onSnap(png);
   }, [onSnap, filter, frameOverlaySrc]);
 
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-  const onSnap = () => {
-    if (status !== "ready" || disabled) return;
-    handleSnap();
-  };
+    const onSnap = () => {
+      if (status !== "ready" || disabled) return;
+      handleSnap();
+    };
 
-  window.addEventListener("SNPCUT_SNAP", onSnap);
-  return () => window.removeEventListener("SNPCUT_SNAP", onSnap);
-}, [handleSnap, status, disabled]);
+    window.addEventListener(SNPCUT_EVENTS.SNAP, onSnap);
+    return () => window.removeEventListener(SNPCUT_EVENTS.SNAP, onSnap);
+  }, [handleSnap, status, disabled]);
 
-useEffect(() => {
-  const onStart = () => start();
-  window.addEventListener("SNPCUT_START_CAMERA", onStart);
-  return () => window.removeEventListener("SNPCUT_START_CAMERA", onStart);
-}, [start]);
+  useEffect(() => {
+    const onStart = () => start();
+    window.addEventListener(SNPCUT_EVENTS.START_CAMERA, onStart);
+    return () => window.removeEventListener(SNPCUT_EVENTS.START_CAMERA, onStart);
+  }, [start]);
 
-useEffect(() => {
-  const onRestart = async () => {
-    if (status === "ready") {
-      stop();
-    }
-    
-    setTimeout(() => {
-      start();
-    }, 150);
-  };
+  useEffect(() => {
+    const onRestart = async () => {
+      if (status === "ready") {
+        stop();
+      }
 
-  window.addEventListener("SNPCUT_RESTART_CAMERA", onRestart);
-  return () => window.removeEventListener("SNPCUT_RESTART_CAMERA", onRestart);
-}, [start, stop, status]);
+      setTimeout(() => {
+        start();
+      }, 150);
+    };
+
+    window.addEventListener(SNPCUT_EVENTS.RESTART_CAMERA, onRestart);
+    return () => window.removeEventListener(SNPCUT_EVENTS.RESTART_CAMERA, onRestart);
+  }, [start, stop, status]);
 
 
   return (
@@ -121,13 +128,4 @@ useEffect(() => {
       </div>
     </div>
   );
-}
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
 }

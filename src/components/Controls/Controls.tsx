@@ -1,11 +1,9 @@
 import classNames from "classnames/bind";
 import styles from "./Controls.module.scss";
-import Button from "@/components/common/Button/Button";
 import { FILTERS, type FilterKey } from "@/utils/filters";
+import type { FrameKey } from "@/utils/frames";
 
 const cx = classNames.bind(styles);
-
-type FrameKey = "none" | "bunny" | "film" | "heart";
 
 type Props = {
   filter: FilterKey;
@@ -14,7 +12,7 @@ type Props = {
   frame: FrameKey;
   onChangeFrame: (k: FrameKey) => void;
 
-  frames: { key: FrameKey; label: string; thumbSrc: string }[];
+  frames: { key: FrameKey; label: string; thumbSrc: string | null }[];
 };
 
 export default function Controls({
