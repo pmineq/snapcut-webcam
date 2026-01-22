@@ -7,10 +7,48 @@
   position: relative;
 }
 
+.headerActions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.autoSaveToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #fff;
+  }
+
+  .label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    user-select: none;
+  }
+}
+
 /* 우상단 카메라 재시작 버튼 */
 .restartBtn {
   border: 0;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
   width: 36px;
   height: 36px;
@@ -280,6 +318,31 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     color: #fff;
     margin-bottom: 0;
+  }
+
+  .headerActions {
+    position: static;
+    gap: 8px;
+  }
+
+  .autoSaveToggle {
+    padding: 4px 10px;
+    font-size: 11px;
+
+    .label {
+      font-size: 11px;
+    }
+
+    .checkbox {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .restartBtn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
 
 

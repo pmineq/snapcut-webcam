@@ -6,6 +6,7 @@ import WebcamView from "@/components/WebcamView/WebcamView";
 import Controls from "@/components/Controls/Controls";
 import ShotGrid from "@/components/ShotGrid/ShotGrid";
 import { downloadDataUrlAsFile } from "@/utils/download";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 import { FRAMES, type FrameKey } from "@/utils/frames";
 import { type FilterKey } from "@/utils/filters";
@@ -28,6 +29,7 @@ export default function Home() {
   const [shots, setShots] = useState<Shot[]>([]);
   const [filter, setFilter] = useState<FilterKey>("none");
   const [frame, setFrame] = useState<FrameKey>("none");
+  const [autoSave, setAutoSave] = useLocalStorage('snpcut-auto-save', false);
 
   const frames = useMemo(
     () =>
@@ -62,15 +64,20 @@ export default function Home() {
   }, [shots]);
 
   const handleSnap = useCallback((pngDataUrl: string) => {
+    const timestamp = Date.now();
+    const newShot = { id: crypto.randomUUID(), dataUrl: pngDataUrl, createdAt: timestamp };
+
     setShots(prev => {
       if (prev.length >= MAX_SHOTS) return prev;
 
-      return [
-        { id: crypto.randomUUID(), dataUrl: pngDataUrl, createdAt: Date.now() },
-        ...prev,
-      ];
+      return [newShot, ...prev];
     });
-  }, []);
+
+    // 자동 저장이 활성화된 경우 즉시 다운로드
+    if (autoSave) {
+      downloadDataUrlAsFile(pngDataUrl, `snpcut-${timestamp}.png`);
+    }
+  }, [autoSave]);
 
   const handleRemove = useCallback((id: string) => {
     setShots((prev) => prev.filter((s) => s.id !== id));
@@ -102,16 +109,29 @@ export default function Home() {
       <header className={cx("header")}>
         <h1 className={cx("title")}>SNPCUT</h1>
         <p className={cx("desc")}>SNAP → ShotGrid 누적 → PNG 다운로드</p>
-        <button
-          type="button"
-          className={cx("restartBtn")}
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent(SNPCUT_EVENTS.RESTART_CAMERA));
-          }}
-          aria-label="카메라 재시작"
-        >
-          ⟳
-        </button>
+
+        <div className={cx("headerActions")}>
+          <label className={cx("autoSaveToggle")}>
+            <input
+              type="checkbox"
+              checked={autoSave}
+              onChange={(e) => setAutoSave(e.target.checked)}
+              className={cx("checkbox")}
+            />
+            <span className={cx("label")}>자동 저장</span>
+          </label>
+
+          <button
+            type="button"
+            className={cx("restartBtn")}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent(SNPCUT_EVENTS.RESTART_CAMERA));
+            }}
+            aria-label="카메라 재시작"
+          >
+            ⟳
+          </button>
+        </div>
       </header>
 
       <main className={cx("content")}>
