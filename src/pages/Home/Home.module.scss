@@ -25,16 +25,60 @@
   background: rgba(0, 0, 0, 0.4);
   border-radius: 20px;
   transition: background 0.2s;
+  position: relative;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
   }
 
   .checkbox {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: #fff;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .checkbox + .label {
+    padding-left: 24px;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    &::after {
+      content: '✓';
+      position: absolute;
+      left: 3px;
+      top: 50%;
+      transform: translateY(-50%) scale(0);
+      width: 10px;
+      height: 10px;
+      color: #000;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+  }
+
+  .checkbox:checked + .label::before {
+    background: #fff;
+    border-color: #fff;
+  }
+
+  .checkbox:checked + .label::after {
+    transform: translateY(-50%) scale(1);
   }
 
   .label {
@@ -209,6 +253,10 @@
   padding: 6px 4px 10px;
 }
 
+.modalGridDown-button {
+  background-color: #fff;
+}
+
 .modalTitle {
   font-size: 15px;
   font-weight: 700;
@@ -327,15 +375,24 @@
 
   .autoSaveToggle {
     padding: 4px 10px;
-    font-size: 11px;
+
+    .checkbox + .label {
+      padding-left: 20px;
+
+      &::before {
+        width: 14px;
+        height: 14px;
+        border-width: 1.5px;
+      }
+
+      &::after {
+        left: 2.5px;
+        font-size: 10px;
+      }
+    }
 
     .label {
       font-size: 11px;
-    }
-
-    .checkbox {
-      width: 14px;
-      height: 14px;
     }
   }
 

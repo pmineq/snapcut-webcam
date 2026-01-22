@@ -38,16 +38,17 @@ const ShotGrid = ({ shots, onRemove, onSelect }: Props) => {
                    <Button
                    size="sm"
                    variant="ghost"
-                   onClick={() =>
-                    downloadDataUrlAsFile(
-                      shot.dataUrl,
-                      `snpcut-${shot.createdAt}.png`
-                    )
-                  }
+                   onClick={async (e) => {
+                      e.stopPropagation();
+                      await downloadDataUrlAsFile(
+                        shot.dataUrl,
+                        `snpcut-${shot.createdAt}.png`
+                      );
+                    }}
                   >
                     다운 ⬇
                     </Button>
-                    
+
                     <Button
                     size="sm"
                     variant="ghost"

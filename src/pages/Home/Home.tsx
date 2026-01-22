@@ -63,7 +63,7 @@ export default function Home() {
     }
   }, [shots]);
 
-  const handleSnap = useCallback((pngDataUrl: string) => {
+  const handleSnap = useCallback(async (pngDataUrl: string) => {
     const timestamp = Date.now();
     const newShot = { id: crypto.randomUUID(), dataUrl: pngDataUrl, createdAt: timestamp };
 
@@ -73,9 +73,9 @@ export default function Home() {
       return [newShot, ...prev];
     });
 
-    // 자동 저장이 활성화된 경우 즉시 다운로드
+    // 자동 저장이 활성화된 경우 즉시 다운로드/공유
     if (autoSave) {
-      downloadDataUrlAsFile(pngDataUrl, `snpcut-${timestamp}.png`);
+      await downloadDataUrlAsFile(pngDataUrl, `snpcut-${timestamp}.png`);
     }
   }, [autoSave]);
 
@@ -89,9 +89,9 @@ export default function Home() {
 
   const recentShots = useMemo(() => shots.slice(0, 3), [shots]);
 
-  const handleDownloadLatest = useCallback(() => {
+  const handleDownloadLatest = useCallback(async () => {
     if (!latestShot) return;
-    downloadDataUrlAsFile(latestShot.dataUrl, `snpcut-${latestShot.createdAt}.png`);
+    await downloadDataUrlAsFile(latestShot.dataUrl, `snpcut-${latestShot.createdAt}.png`);
   }, [latestShot]);
 
   const [showCameraGate, setShowCameraGate] = useState(true);
@@ -276,8 +276,8 @@ export default function Home() {
                     <button
                       type="button"
                       className={cx("modalBtn")}
-                      onClick={() =>
-                        downloadDataUrlAsFile(shot.dataUrl, `snpcut-${shot.createdAt}.png`)
+                      onClick={async () =>
+                        await downloadDataUrlAsFile(shot.dataUrl, `snpcut-${shot.createdAt}.png`)
                       }
                     >
                       다운로드
